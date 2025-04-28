@@ -15,7 +15,6 @@ def load_image(image_file):
         image = Image.open(image_file).convert("RGB")
     return image
 
-
 def get_draw_area(draw_kwargs):
     im = Image.new("RGB", (0, 0))
     dr = ImageDraw.Draw(im)
@@ -23,8 +22,8 @@ def get_draw_area(draw_kwargs):
 
 
 def text_to_image(text: str):
-    # font = ImageFont.truetype("FreeMonoBold.ttf", 50)
-    font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 50)
+    font = ImageFont.truetype("FreeMonoBold.ttf", 50)
+    # font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 50)
     draw_kwargs = {
         "xy": (60, 30), # starting position
         "text": text,
@@ -133,11 +132,20 @@ if __name__ == "__main__":
         os.makedirs(os.path.dirname(img_path), exist_ok=True)
         img.save(img_path)
     '''
-    dataset_path = "/Users/xinyangao/Desktop/Experiments/data/SIUO/siuo_new.json"
+    dataset_path = "./data/few_shot.json"
     with open(dataset_path, "r") as f:
         data = json.load(f)
     for item in data:
         # print(item["OCR"])
-        img = text_to_image(text_no_step(item["OCR"],wrap=True))
-        img_path = f"./typoimg/{item['index']}.png"
+        img = text_to_image(text_no_step(item["safe_OCR"],wrap=True))
+        img_path = f"./data/few_shot/typoimg/safe/{item['index']}.png"
+        img.save(img_path)
+        img = text_to_image(text_no_step(item["unsafe_OCR"],wrap=True))
+        img_path = f"./data/few_shot/typoimg/unsafe/{item['index']}.png"
+        img.save(img_path)
+        img = text_to_image(text_step_by_step(f"Steps to " + item["safe_OCR"],wrap=True))
+        img_path = f"./data/few_shot/figimg/safe/{item['index']}.png"
+        img.save(img_path)
+        img = text_to_image(text_step_by_step(f"Steps to " + item["unsafe_OCR"],wrap=True))
+        img_path = f"./data/few_shot/figimg/unsafe/{item['index']}.png"
         img.save(img_path)

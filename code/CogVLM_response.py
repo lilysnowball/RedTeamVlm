@@ -6,7 +6,7 @@ import os
 import base64
 from io import BytesIO
 import csv  
-from utils import create_dataset, create_csv_dataset
+from utils import *
 
 def load_image(image_input):
     """
@@ -117,8 +117,7 @@ def generate_response(dataset,model_path):
                 do_sample=False
                 )
             response = response[:, txt_inputs['input_ids'].shape[1]:]
-            response = tokenizer.decode(response[0], skip_special_tokens=True) 
-
+        response = tokenizer.decode(response[0], skip_special_tokens=True) 
         output['response'] = response
         # print(output['response'])
         output['scenario'] = sample['scenario']
@@ -128,29 +127,20 @@ def generate_response(dataset,model_path):
 
 
 if __name__ == "__main__":
-    dataset_path = "./data/SIUO/siuo_new.csv"
-    model_path = "/root/autodl-tmp/model/THUDM/cogvlm-chat-hf"
-    mode = "puretext"
-    dataset = []
-    outputs = []
-    dataset = create_dataset(dataset_path,mode)
-    outputs = generate_response(dataset,model_path)
-    # save the response to a csv file
-    save_path = f'./result/{mode}/cogvlm_generate.csv'
-    # Make directory if it does not exist
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(save_path, 'w') as file:
-        writer = csv.writer(file)
-        writer.writerow(['index','scenario','response'])
-        for item in outputs:            
-            writer.writerow([item['index'], item['scenario'], item['response']])
-
-            
-
-
-
-
-
-
-
-
+    # dataset_path = "./data/SIUO/siuo_new.json"
+    dataset_path = "./data/few_shot.json"
+    model_path = "/root/autodl-tmp/model/cogvlm-chat-hf"
+    for mode in ["puretext","figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
+        dataset = []
+        outputs = []
+        dataset = create_unsafe_dataset(dataset_path,mode)
+        outputs = generate_response(dataset,model_path)
+        # save the response to a csv file
+        save_path = f'./few_shot_result/unsafe/{mode}/cogvlm_generate.csv'
+        # Make directory if it does not exist
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['index','scenario','response'])
+            for item in outputs:            
+                writer.writerow([item['index'], item['scenario'], item['response']])

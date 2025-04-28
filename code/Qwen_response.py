@@ -1,8 +1,9 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.generation import GenerationConfig
 import torch
-from utils import create_dataset
+from utils import *
 import csv
+import os
 
 
 # use bf16
@@ -13,10 +14,8 @@ import csv
 # model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL", device_map="cpu", trust_remote_code=True).eval()
 # use cuda device
 
-dataset_path = "./data/DM_instructions.csv"
-dataset = create_dataset(dataset_path)
 
-def generate_response(model_path = "/root/autodl-tmp/model/Qwen-VL-Chat",dataset = dataset):
+def generate_response(model_path,dataset):
   model = AutoModelForCausalLM.from_pretrained(model_path, device_map="cuda", trust_remote_code=True).eval()
   tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
   outputs = []
@@ -24,10 +23,12 @@ def generate_response(model_path = "/root/autodl-tmp/model/Qwen-VL-Chat",dataset
   # model.generation_config = GenerationConfig.from_pretrained("Qwen/Qwen-VL", trust_remote_code=True)
   for sample in dataset:
     output = {}
-    query = tokenizer.from_list_format([
-        {'image': sample['img']},
-        {'text': sample['txt']},
-    ])
+    elements = []
+    if sample["img"] is not None:
+        elements.append({ "image": sample["img"] })
+    elements.append({ "text": sample["txt"] })
+
+    query = tokenizer.from_list_format(elements)
     '''
     # below code is for Qwen-VL (the pretrained model)
     inputs = tokenizer(query, return_tensors='pt', add_special_tokens=True)
@@ -66,23 +67,20 @@ def generate_response(model_path = "/root/autodl-tmp/model/Qwen-VL-Chat",dataset
 
 
 if __name__ == "__main__":
+    # dataset_path = "./data/SIUO/siuo_new.json"
+    dataset_path = "./data/few_shot.json"
     model_path = "/root/autodl-tmp/model/Qwen-VL-Chat"
-    dataset_path = "./data/DM_instructions.csv" # only csv is supported for Qwen-VL now
-    dataset = []
-    outputs = []
-    dataset = create_dataset(dataset_path)
-    dataset = dataset[:300]
-    outputs = generate_response(model_path,dataset)
-    # save the response to a csv file
-    with open('./response/Qwen-VL_response_DM_instructions.csv', 'w') as file:
-        writer = csv.writer(file)
-        writer.writerow(['index','scenario','response'])
-        for item in outputs:            
-            writer.writerow([item['index'], item['scenario'], item['response']])
-
-    print("Successfully saved the response to ./response/Qwen-VL_response_DM_instructions.csv")
-
-
-
-
-
+    for mode in ["puretext","figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
+      dataset = []
+      outputs = []
+      dataset = create_unsafe_dataset(dataset_path,mode)
+      outputs = generate_response(model_path,dataset)
+      # save the response to a csv file
+      save_path = f'./few_shot_result/unsafe/{mode}/Qwen_generate.csv'
+      # Make directory if it does not exist
+      os.makedirs(os.path.dirname(save_path), exist_ok=True)
+      with open(save_path, 'w') as file:
+          writer = csv.writer(file)
+          writer.writerow(['index','scenario','response'])
+          for item in outputs:            
+              writer.writerow([item['index'], item['scenario'], item['response']])

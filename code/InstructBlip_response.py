@@ -6,7 +6,7 @@ from io import BytesIO
 import base64
 import os
 import csv
-from utils import create_dataset
+from utils import *
 
 def load_image(image_input):
     """
@@ -76,25 +76,24 @@ def load_image(image_input):
         print(f"Unexpected error loading image: {e}")
         return None 
     
-def generate_response(model_path,dataset):
+def generate_response(model_path, dataset):
     model = InstructBlipForConditionalGeneration.from_pretrained(model_path)
-    processor = InstructBlipProcessor.from_pretrained(model_path,use_fast=False)
+    processor = InstructBlipProcessor.from_pretrained(model_path, use_fast=False)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
-
+    
+    outputs = []  # Initialize outputs list
+    
     for sample in dataset:      
         output = {}
-        if sample['img'] is not None:
-            image = load_image(sample['img'])
-            inputs = processor(images=image, text=sample['txt'], return_tensors="pt").to(device)
-        else:
-            inputs = processor(text=sample['txt'], return_tensors="pt").to(device)
+        image = load_image(sample['img'])
+        inputs = processor(images=image, text=sample['txt'], return_tensors="pt").to(device)
         response = model.generate(
                 **inputs,
                 do_sample=False,
                 num_beams=5,
-                max_length=500,
+                max_length=1000,
                 min_length=1,
                 top_p=0.9,
                 repetition_penalty=1.5,
@@ -107,27 +106,25 @@ def generate_response(model_path,dataset):
         output['scenario'] = sample['scenario']
         output['index'] = sample['index']
         outputs.append(output)
+    
     return outputs
 
 
 if __name__ == "__main__":
-    dataset_path = "./data/SIUO/siuo_new.csv"
+    # dataset_path = "./data/SIUO/siuo_new.json"
+    dataset_path = "./data/few_shot.json"
     model_path = "/root/autodl-tmp/model/instructblip-vicuna-7b"
-    mode = "puretext"
-    dataset = []
-    outputs = []
-    dataset = create_dataset(dataset_path,mode)
-    outputs = generate_response(dataset,model_path)
-    # save the response to a csv file
-    save_path = f'./result/{mode}/instructblip_generate.csv'
-    # Make directory if it does not exist
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(save_path, 'w') as file:
-        writer = csv.writer(file)
-        writer.writerow(['index','scenario','response'])
-        for item in outputs:            
-            writer.writerow([item['index'], item['scenario'], item['response']])
-
-            
-            
-    
+    for mode in ["figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
+        dataset = []
+        dataset = create_unsafe_dataset(dataset_path,mode)
+        outputs = generate_response(model_path,dataset)
+        # save the response to a csv file
+        save_path = f'./few_shot_result/unsafe/{mode}/instructblip_generate.csv'
+        # Make directory if it does not exist
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['index','scenario','response'])
+            for item in outputs:            
+                writer.writerow([item['index'], item['scenario'], item['response']])
+        print(f"Results saved to {save_path}")

@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image
 import requests
 from io import BytesIO
+import os
 import re
 import gc
 from torch.cuda.amp import autocast
@@ -27,7 +28,8 @@ from llava.mm_utils import (
     tokenizer_image_token,
     get_model_name_from_path,
 )
-from utils import create_dataset
+from utils import *
+
 def generate_response(model_path,dataset):
     dataset: list[dict]
     sample: dict
@@ -184,22 +186,24 @@ def generate_response(model_path,dataset):
 
 
 if __name__ == "__main__":
-    dataset_path = "./data/SIUO/siuo_new.csv"
+    # dataset_path = "./data/SIUO/siuo_new.json"
+    dataset_path = "./data/few_shot.json"
     model_path = "/root/autodl-tmp/model/llava-v1.6-vicuna-7b"
-    mode = "puretext"
-    dataset = []
-    outputs = []
-    dataset = create_dataset(dataset_path,mode)
-    outputs = generate_response(dataset,model_path)
-    # save the response to a csv file
-    save_path = f'./result/{mode}/llava_generate.csv'
-    # Make directory if it does not exist
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(save_path, 'w') as file:
-        writer = csv.writer(file)
-        writer.writerow(['index','scenario','response'])
-        for item in outputs:            
-            writer.writerow([item['index'], item['scenario'], item['response']])
+    for mode in ["puretext","figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
+        dataset = []
+        outputs = []
+        dataset = create_dataset(dataset_path,mode)
+        outputs = generate_response(model_path,dataset)
+        # save the response to a csv file
+        save_path = f'./few_shot_result/unsafe/{mode}/llava_generate.csv'
+        # Make directory if it does not exist
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['index','scenario','response'])
+            for item in outputs:            
+                writer.writerow([item['index'], item['scenario'], item['response']])
+        print(f"Results saved to {save_path}")
 
-            
-            
+                    
+                    
