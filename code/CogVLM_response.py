@@ -130,13 +130,13 @@ if __name__ == "__main__":
     # dataset_path = "./data/SIUO/siuo_new.json"
     dataset_path = "./data/few_shot.json"
     model_path = "/root/autodl-tmp/model/cogvlm-chat-hf"
-    for mode in ["puretext","figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
+    for mode in ["redundantimg","irrelevantimg"]:
         dataset = []
         outputs = []
-        dataset = create_unsafe_dataset(dataset_path,mode)
+        dataset = create_safe_dataset(dataset_path,mode)
         outputs = generate_response(dataset,model_path)
         # save the response to a csv file
-        save_path = f'./few_shot_result/unsafe/{mode}/cogvlm_generate.csv'
+        save_path = f'./few_shot_result/safe/{mode}/cogvlm_generate.csv'
         # Make directory if it does not exist
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, 'w') as file:

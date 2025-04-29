@@ -115,8 +115,9 @@ if __name__ == "__main__":
     dataset_path = "./data/few_shot.json"
     model_path = "/root/autodl-tmp/model/instructblip-vicuna-7b"
     for mode in ["figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
-        dataset = []
+        
         dataset = create_unsafe_dataset(dataset_path,mode)
+        print(len(dataset))
         outputs = generate_response(model_path,dataset)
         # save the response to a csv file
         save_path = f'./few_shot_result/unsafe/{mode}/instructblip_generate.csv'

@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # dataset_path = "./data/SIUO/siuo_new.json"
     dataset_path = "./data/few_shot.json"
     model_path = "/root/autodl-tmp/model/Qwen-VL-Chat"
-    for mode in ["puretext","figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
+    for mode in ["typoimg","vcd"]:
       dataset = []
       outputs = []
       dataset = create_unsafe_dataset(dataset_path,mode)

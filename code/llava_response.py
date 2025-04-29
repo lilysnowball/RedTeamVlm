@@ -192,7 +192,7 @@ if __name__ == "__main__":
     for mode in ["puretext","figimg","typoimg","vcd","redundantimg","irrelevantimg"]:
         dataset = []
         outputs = []
-        dataset = create_dataset(dataset_path,mode)
+        dataset = create_unsafe_dataset(dataset_path,mode)
         outputs = generate_response(model_path,dataset)
         # save the response to a csv file
         save_path = f'./few_shot_result/unsafe/{mode}/llava_generate.csv'
