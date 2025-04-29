@@ -65,7 +65,7 @@ assistant2 = ("Output JSON: "
 
 def generate_moderation(system_prompt, item, demos, client=None, max_retries=3):
     if client is None:
-        api_key = "sk-e0412234d90b4259ad63a96c2c80d43a"
+        api_key = "YOUR KEY"
         base_url = "https://api.deepseek.com"
         client = OpenAI(api_key=api_key, base_url=base_url)
 
